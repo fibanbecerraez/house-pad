@@ -31,7 +31,7 @@ def run_process():
             # Obtener informacion de la pagina
             soup = get_html.get_info(COMPRA_ALQUILER, BARRIO, contador, driver)
             
-            anuncios = soup.find_all("div", class_="CardContainer-sc-1tt2vbg-5 fvuHxG")
+            anuncios = soup.find_all("div", class_="postingsList-module__card-container")
             
             for anuncio in anuncios:
                 try:
@@ -47,7 +47,7 @@ def run_process():
                     continue
             
             # Chequear si hay una proxima pagina
-            div_tag = soup.find("div", class_="Container-sc-n5babu-0")
+            div_tag = soup.find("div", class_="paging-module__container-paging")
             links_data = [{"text": a.get_text(strip=False), "href": a["href"], "data_qa": a.get("data-qa", "")} for a in div_tag.find_all("a")]
             if any(link["data_qa"] == "PAGING_NEXT" for link in links_data):
                 contador = contador + 1

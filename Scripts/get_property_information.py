@@ -4,7 +4,7 @@ import time
 import re
 
 def get_price(anuncio):
-    precio = anuncio.find_all("div", class_="postingPrices-module__price__fqpP5")
+    precio = anuncio.find_all("div", class_="postingPrices-module__price")
     price_text = precio[0].next.strip() if precio[0].next else ""
     currency, price_text = price_text.split(" ")
     price_text = price_text.replace('.', '')
@@ -12,17 +12,17 @@ def get_price(anuncio):
     return price_text, currency
 
 def get_location(anuncio):
-    adress = anuncio.find_all("div", class_="postingLocations-module__location-address__k8Ip7 postingLocations-module__location-address-in-listing__UQS03")
+    adress = anuncio.find_all("div", class_="postingLocations-module__location-address postingLocations-module__location-address-in-listing")
     adress = adress[0].next.strip() if adress[0].next else ""
 
-    neighborhood = anuncio.find_all("h2", class_="postingLocations-module__location-text__Y9QrY")
+    neighborhood = anuncio.find_all("h2", class_="postingLocations-module__location-text")
     neighborhood = neighborhood[0].next.strip() if neighborhood[0].next else ""
 
     return adress, neighborhood
 
 def get_house_information(anuncio):
     # Find the <h3> tag with the specified class
-    h3_tag = anuncio.find("h3", class_="postingMainFeatures-module__posting-main-features-block__se1F_")
+    h3_tag = anuncio.find("h3", class_="postingMainFeatures-module__posting-main-features-block")
 
     # Extract text from all <span> tags within the <h3> tag
     span_texts = [span.get_text() for span in h3_tag.find_all("span")]
@@ -32,7 +32,7 @@ def get_house_information(anuncio):
     return list_to_str
 
 def get_link(anuncio):
-    link = str(anuncio.find_all("div", class_="postingCardLayout-module__posting-card-layout__Lklt9"))
+    link = str(anuncio.find_all("div", class_="postingCardLayout-module__posting-card-layout"))
     match = re.search(r'data-to-posting="([^"]+)"', link)
     if match:
         data_to_posting_url = match.group(1)
