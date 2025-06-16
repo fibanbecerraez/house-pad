@@ -5,48 +5,25 @@ import os
 FILES_PATH = os.path.join(os.getcwd(),r'Files')
 
 def save_info(df_properties):
+    # Definir columnas esperadas
+    original_columns = ['ID','URL','CALLE','BARRIO','INFO', 'MONEDA', 'PRECIO_ORIGINAL', 'FECHA_INGRESO', 'METROS', 'AMBIENTES', 'DORMITORIOS', 'BANOS', 'COCHERA']
+    time_price_columns = ['ID', 'PRECIO_ORIGINAL', 'FECHA_PRECIO']
 
-    # Guardar nuevas publicaciones en la tabla original
-    original_df = pd.read_excel(os.path.join(FILES_PATH,r'original_info.xlsx'))
-    existing_ids = set(map(str, original_df['ID'].dropna().tolist()))
-    new_ids = set(map(str, df_properties['ID'].dropna().tolist()))
-    missing_ids = new_ids.difference(existing_ids)
-    missing_data = df_properties[df_properties['ID'].astype(str).isin(missing_ids)]
-    if not missing_data.empty:
-        updated_df = pd.concat([original_df, missing_data], ignore_index=True)
-        updated_df.to_excel(os.path.join(FILES_PATH,r'original_info.xlsx'), index=False)
+    # Crear archivos si no existen
+    original_path = os.path.join(FILES_PATH, r'original_info.xlsx')
+    time_price_path = os.path.join(FILES_PATH, r'time_price.xlsx')
+    if not os.path.exists(original_path):
+        pd.DataFrame(columns=original_columns).to_excel(original_path, index=False)
+    if not os.path.exists(time_price_path):
+        pd.DataFrame(columns=time_price_columns).to_excel(time_price_path, index=False)
 
-
-    # Guardar en el historico de precios los nuevos valores
-    time_df = pd.read_excel(os.path.join(FILES_PATH,r'time_price.xlsx'))
+    # Sobrescribir los archivos con los nuevos datos
+    df_properties.to_excel(original_path, index=False)
     df_time_price = df_properties.copy()
-    df_time_price = df_time_price.drop(columns=['URL','CALLE','BARRIO','INFO','MONEDA'])
+    df_time_price = df_time_price.drop(columns=['URL','CALLE','BARRIO','INFO','MONEDA','METROS','AMBIENTES','DORMITORIOS','BANOS','COCHERA'])
     df_time_price = df_time_price.rename(columns={'FECHA_INGRESO': 'FECHA_PRECIO'})
     df_time_price['ID'] = df_time_price['ID'].astype(str)
-    time_df['ID'] = time_df['ID'].astype(str)
-
-    # # Mirar duplicados (ID y FECHA_PRECIO)
-    # duplicate_entries = pd.merge(
-    #     df_time_price, 
-    #     time_df, 
-    #     how='inner', 
-    #     on=['ID', 'FECHA_PRECIO']
-    # )
-
-    # if not duplicate_entries.empty:
-    #     print("Duplicate entries found:")
-    #     print(duplicate_entries)
-    # else:
-    #     print("No duplicate entries found.")
-
-    # non_duplicates = pd.concat([df_time_price, duplicate_entries])
-    # non_duplicates = non_duplicates.drop_duplicates(keep=False)
-    # updated_time_df = pd.concat([time_df, non_duplicates])
-    # updated_time_df["PRECIO"] = updated_time_df["PRECIO"].fillna(updated_time_df["PRECIO_ORIGINAL"])
-    # updated_time_df = updated_time_df.drop(columns=['PRECIO_ORIGINAL'])
-    final_df = pd.concat([time_df, df_time_price], ignore_index=True)
-    final_df['ID'] = df_time_price['ID'].astype(str)
-    final_df.to_excel(os.path.join(FILES_PATH,r'time_price.xlsx'), index=False)
+    df_time_price.to_excel(time_price_path, index=False)
 
 
 
