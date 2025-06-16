@@ -1,0 +1,14 @@
+
+Variables y fuentes:
+- precio_original: Precio de publicación de la propiedad (scraping, Zonaprop)
+- precio_prom_barrio: Precio promedio de alquiler mensual por barrio y período (MI_DAP_AX01)
+- precio_prom_ambiente: Precio promedio de alquiler mensual por cantidad de ambientes y período (MI_DAP_AX15)
+- indice_precio_m2: Índice de precio promedio del m² de departamentos en alquiler por cantidad de ambientes y período (MI_DAN_AX03)
+- diferencia_vs_prom_barrio: Diferencia entre precio de publicación y promedio del barrio
+- diferencia_vs_prom_ambiente: Diferencia entre precio de publicación y promedio por ambiente
+- indice_sobrevaloracion: Relación entre precio m2 scraping e índice histórico
+
+Fuentes:
+- MI_DAP_AX01: Dirección General de Estadística y Censos (GCBA), Buscainmueble, Adinco, Argenprop
+- MI_DAP_AX15: Dirección General de Estadística y Censos (GCBA), Buscainmueble, Adinco, Argenprop
+- MI_DAN_AX03: Instituto de Estadística y Censos de la Ciudad Autónoma de Buenos Aires

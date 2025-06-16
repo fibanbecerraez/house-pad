@@ -9,33 +9,50 @@ import export_info
 from datetime import datetime
 today = datetime.today().strftime('%Y-%m-%d')
 import os
+import logging
+
+# Configurar logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('scraping.log'),
+        logging.StreamHandler()
+    ]
+)
 
 def run_process():
-    
     # Constantes
     COMPRA_ALQUILER = ['alquiler']
-    BARRIO = ['villa-devoto']
+    BARRIO = ['capital-federal']
     PAGINA = 1
+    
+    # Estadísticas
+    total_propiedades = 0
+    propiedades_exitosas = 0
+    propiedades_fallidas = 0
         
     try:
-        print("Iniciando el proceso de scraping...")
+        logging.info("Iniciando el proceso de scraping...")
         # Inicializar en incognito
         options = uc.ChromeOptions()
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
-        print("Configurando el navegador...")
+        logging.info("Configurando el navegador...")
         driver = uc.Chrome(options=options)
 
         # Variables
         df_properties = pd.DataFrame(columns=['ID','URL','CALLE','BARRIO','INFO', 'MONEDA', 'PRECIO_ORIGINAL', 'FECHA_INGRESO', 'METROS', 'AMBIENTES', 'DORMITORIOS', 'BANOS', 'COCHERA'])
         contador = PAGINA
+        
         while True:
-            print(f"\nProcesando página {contador}...")
+            logging.info(f"Procesando página {contador}...")
             # Obtener informacion de la pagina
             soup = get_html.get_info(COMPRA_ALQUILER, BARRIO, contador, driver)
             
             anuncios = soup.find_all("div", class_="postingsList-module__card-container")
-            print(f"Encontrados {len(anuncios)} anuncios en la página {contador}")
+            logging.info(f"Encontrados {len(anuncios)} anuncios en la página {contador}")
+            total_propiedades += len(anuncios)
             
             for anuncio in anuncios:
                 try:
@@ -45,11 +62,19 @@ def run_process():
                     info, metros, ambientes, dormitorios, banos, cochera = get_property_information.get_house_information(anuncio)
                     id = get_property_information.get_id(anuncio)            
                     df_properties.loc[len(df_properties)] = [id, link, address, neighborhood, info, currency, price, today, metros, ambientes, dormitorios, banos, cochera]
-                    print(f"Propiedad procesada: {address} - {price} {currency}")
+                    propiedades_exitosas += 1
+                    logging.info(f"Propiedad procesada exitosamente: {address} - {price} {currency}")
 
                 except Exception as e:
-                    print(f"Error procesando una propiedad: {str(e)}")
+                    propiedades_fallidas += 1
+                    logging.error(f"Error procesando una propiedad: {str(e)}")
                     continue
+            
+            # Guardar datos después de cada página
+            if len(df_properties) > 0:
+                export_info.save_info(df_properties)
+                logging.info(f"Datos guardados después de la página {contador}")
+                df_properties = pd.DataFrame(columns=['ID','URL','CALLE','BARRIO','INFO', 'MONEDA', 'PRECIO_ORIGINAL', 'FECHA_INGRESO', 'METROS', 'AMBIENTES', 'DORMITORIOS', 'BANOS', 'COCHERA'])
             
             # Chequear si hay una proxima pagina
             div_tag = soup.find("div", class_="paging-module__container-paging")
@@ -57,22 +82,27 @@ def run_process():
                 links_data = [{"text": a.get_text(strip=False), "href": a["href"], "data_qa": a.get("data-qa", "")} for a in div_tag.find_all("a")]
                 if any(link["data_qa"] == "PAGING_NEXT" for link in links_data):
                     contador = contador + 1
-                    print("Hay más páginas, continuando...")
+                    logging.info("Hay más páginas, continuando...")
                 else:
-                    print("No hay más páginas, finalizando...")
+                    logging.info("No hay más páginas, finalizando...")
                     break
             else:
-                print("No se encontró el contenedor de paginación, finalizando...")
+                logging.warning("No se encontró el contenedor de paginación, finalizando...")
                 break
 
-        print(f"\nProceso completado. Se encontraron {len(df_properties)} propiedades en total.")
-        export_info.save_info(df_properties)
+        logging.info(f"""
+        Proceso completado:
+        - Total de propiedades encontradas: {total_propiedades}
+        - Propiedades procesadas exitosamente: {propiedades_exitosas}
+        - Propiedades con error: {propiedades_fallidas}
+        - Tasa de éxito: {(propiedades_exitosas/total_propiedades)*100:.2f}%
+        """)
         
     except Exception as e:
-        print(f"Error durante el proceso: {str(e)}")
+        logging.error(f"Error durante el proceso: {str(e)}")
     
     finally:
-        print("Cerrando el navegador...")
+        logging.info("Cerrando el navegador...")
         driver.quit()
 
 if __name__ == "__main__":
